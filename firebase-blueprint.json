@@ -1,0 +1,150 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "Imovel de alto padrao no catalogo da FA Imoveis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unico do imovel" },
+        "title": { "type": "string", "description": "Titulo de marketing" },
+        "description": { "type": "string", "description": "Resumo rapido" },
+        "fullDescription": { "type": "string", "description": "Descricao detalhada" },
+        "type": { "type": "string", "description": "Tipo de imovel" },
+        "location": { "type": "string", "description": "Localizacao (Cidade, UF)" },
+        "neighborhood": { "type": "string", "description": "Bairro" },
+        "price": { "type": "number", "description": "Preco de venda" },
+        "isSobConsulta": { "type": "boolean", "description": "Indica se o preco esta sob consulta" },
+        "suites": { "type": "number", "description": "Numero de suites" },
+        "bathrooms": { "type": "number", "description": "Numero de banheiros" },
+        "area": { "type": "number", "description": "Area em m2" },
+        "vagas": { "type": "number", "description": "Vagas de garagem" },
+        "condominio": { "type": "number", "description": "Valor do condominio" },
+        "iptu": { "type": "number", "description": "Valor do IPTU" },
+        "images": { "type": "array", "description": "Lista de URLs das imagens" },
+        "badge": { "type": "string", "description": "Etiqueta opcional" },
+        "comodidades": { "type": "array", "description": "Diferenciais do imovel" },
+        "brokerId": { "type": "string", "description": "ID do corretor responsavel" },
+        "closestPlaces": { "type": "array", "description": "Locais proximos de interesse" }
+      },
+      "required": ["id", "title", "description", "fullDescription", "type", "location", "neighborhood", "price", "isSobConsulta", "suites", "bathrooms", "area", "vagas", "images", "comodidades", "brokerId"]
+    },
+    "Broker": {
+      "title": "Broker",
+      "description": "Corretor de imoveis cadastrado na FA Imoveis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unico do corretor" },
+        "name": { "type": "string", "description": "Nome completo do corretor" },
+        "title": { "type": "string", "description": "Titulo/Cargo do corretor" },
+        "phone": { "type": "string", "description": "Telefone de contato" },
+        "email": { "type": "string", "description": "E-mail de contato" },
+        "creci": { "type": "string", "description": "Registro profissional CRECI" },
+        "image": { "type": "string", "description": "URL da foto de perfil" },
+        "rating": { "type": "number", "description": "Avaliacao (0 a 5)" },
+        "yearsOfExperience": { "type": "number", "description": "Anos de experiencia" },
+        "propertiesSold": { "type": "number", "description": "Quantidade de imoveis vendidos" },
+        "bio": { "type": "string", "description": "Biografia detalhada" },
+        "specialty": { "type": "string", "description": "Especialidade principal" },
+        "instagram": { "type": "string", "description": "Usuario do Instagram" },
+        "linkedin": { "type": "string", "description": "Usuario do LinkedIn" },
+        "quote": { "type": "string", "description": "Frase de efeito ou citacao" }
+      },
+      "required": ["id", "name", "title", "phone", "email", "creci", "image", "rating", "yearsOfExperience", "propertiesSold", "bio", "specialty"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Dono de imovel ou comprador interessado",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unico do cliente" },
+        "name": { "type": "string", "description": "Nome completo" },
+        "email": { "type": "string", "description": "E-mail de contato" },
+        "phone": { "type": "string", "description": "Telefone de contato" },
+        "type": { "type": "string", "description": "Tipo de cliente", "enum": ["owner", "buyer"] },
+        "propertyId": { "type": "string", "description": "ID do imovel associado" },
+        "buyerStatus": { "type": "string", "description": "Status de interesse do comprador" },
+        "createdAt": { "type": "string", "description": "Data de criacao do registro" },
+        "cpf": { "type": "string", "description": "Documento CPF" },
+        "address": { "type": "string", "description": "Endereco do cliente" },
+        "spouseName": { "type": "string", "description": "Nome do conjuge" }
+      },
+      "required": ["id", "name", "email", "phone", "type"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Usuario administrador ou corretor com credencial de acesso",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unico do usuario" },
+        "name": { "type": "string", "description": "Nome do administrador" },
+        "email": { "type": "string", "description": "E-mail de login" },
+        "password": { "type": "string", "description": "Senha em texto simples ou hash para fallback local" },
+        "role": { "type": "string", "description": "Papel do usuario", "enum": ["admin", "manager", "broker"] },
+        "createdAt": { "type": "string", "description": "Data de criacao do registro" }
+      },
+      "required": ["id", "name", "email", "password", "role"]
+    },
+    "AboutUsConfig": {
+      "title": "AboutUsConfig",
+      "description": "Configuracoes da secao Sobre Nos da imobiliaria",
+      "type": "object",
+      "properties": {
+        "heroSubtitlePt": { "type": "string" },
+        "heroSubtitleEn": { "type": "string" },
+        "heroTitlePt": { "type": "string" },
+        "heroTitleEn": { "type": "string" },
+        "heroDescriptionPt": { "type": "string" },
+        "heroDescriptionEn": { "type": "string" },
+        "officeImage": { "type": "string" },
+        "officeImageBadgePt": { "type": "string" },
+        "officeImageBadgeEn": { "type": "string" },
+        "officeAddress": { "type": "string" },
+        "stat1Value": { "type": "string" },
+        "stat1LabelPt": { "type": "string" },
+        "stat1LabelEn": { "type": "string" },
+        "stat2Value": { "type": "string" },
+        "stat2LabelPt": { "type": "string" },
+        "stat2LabelEn": { "type": "string" },
+        "contentTitlePt": { "type": "string" },
+        "contentTitleEn": { "type": "string" },
+        "contentParagraphsPt": { "type": "string" },
+        "contentParagraphsEn": { "type": "string" },
+        "pillar1TitlePt": { "type": "string" },
+        "pillar1TitleEn": { "type": "string" },
+        "pillar1DescPt": { "type": "string" },
+        "pillar1DescEn": { "type": "string" },
+        "pillar2TitlePt": { "type": "string" },
+        "pillar2TitleEn": { "type": "string" },
+        "pillar2DescPt": { "type": "string" },
+        "pillar2DescEn": { "type": "string" },
+        "pillar3TitlePt": { "type": "string" },
+        "pillar3TitleEn": { "type": "string" },
+        "pillar3DescPt": { "type": "string" },
+        "pillar3DescEn": { "type": "string" }
+      },
+      "required": ["heroSubtitlePt", "heroSubtitleEn", "heroTitlePt", "heroTitleEn", "heroDescriptionPt", "heroDescriptionEn", "officeImage", "officeImageBadgePt", "officeImageBadgeEn", "officeAddress", "stat1Value", "stat1LabelPt", "stat1LabelEn", "stat2Value", "stat2LabelPt", "stat2LabelEn", "contentTitlePt", "contentTitleEn", "contentParagraphsPt", "contentParagraphsEn"]
+    }
+  },
+  "firestore": {
+    "properties": {
+      "schema": "Property",
+      "description": "Colecao global de imoveis cadastrados"
+    },
+    "brokers": {
+      "schema": "Broker",
+      "description": "Colecao global de corretores cadastrados"
+    },
+    "clients": {
+      "schema": "Client",
+      "description": "Colecao de donos e compradores interessados"
+    },
+    "admin_users": {
+      "schema": "AdminUser",
+      "description": "Colecao de credenciais customizadas para acesso administrativo"
+    },
+    "settings": {
+      "schema": "AboutUsConfig",
+      "description": "Colecao de configuracoes estaticas e de apresentacao do site"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "FA Imóveis",
+  "description": "Plataforma de intermediação imobiliária de luxo em São Paulo. Explore coberturas, mansões e apartamentos nos Jardins, Itaim Bibi e Vila Nova Conceição.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

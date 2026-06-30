@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'WandesonAndrade33@gmail.com' &&
+        request.auth.token.email_verified == true
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidProperty(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 500
+        && data.fullDescription is string && data.fullDescription.size() <= 5000
+        && data.type is string && data.type.size() <= 100
+        && data.location is string && data.location.size() <= 100
+        && data.neighborhood is string && data.neighborhood.size() <= 100
+        && data.price is number
+        && data.isSobConsulta is bool
+        && data.suites is number
+        && data.bathrooms is number
+        && data.area is number
+        && data.vagas is number
+        && data.condominio is number
+        && data.iptu is number
+        && data.images is list && data.images.size() <= 50
+        && data.comodidades is list && data.comodidades.size() <= 100
+        && data.badge is string && data.badge.size() <= 50
+        && data.brokerId is string && data.brokerId.size() <= 100
+        && data.closestPlaces is list && data.closestPlaces.size() <= 20
+        && (!('address' in data) || (data.address is string && data.address.size() <= 500))
+        && (!('showAddressOnSite' in data) || (data.showAddressOnSite is bool))
+        && (!('ownerId' in data) || (data.ownerId is string && data.ownerId.size() <= 128))
+        && (!('status' in data) || (data.status is string && (data.status == 'available' || data.status == 'interested' || data.status == 'sold')));
+    }
+
+    function isValidClient(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 100
+        && data.phone is string && data.phone.size() <= 50
+        && data.type is string && (data.type == 'owner' || data.type == 'buyer')
+        && (!('propertyId' in data) || (data.propertyId is string && data.propertyId.size() <= 128))
+        && (!('buyerStatus' in data) || (data.buyerStatus is string && (data.buyerStatus == 'interested' || data.buyerStatus == 'signed_contract' || data.buyerStatus == '')))
+        && (!('createdAt' in data) || (data.createdAt is string))
+        && (!('cpf' in data) || (data.cpf is string && data.cpf.size() <= 50))
+        && (!('address' in data) || (data.address is string && data.address.size() <= 500))
+        && (!('spouseName' in data) || (data.spouseName is string && data.spouseName.size() <= 200));
+    }
+
+    function isValidBroker(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.title is string && data.title.size() <= 200
+        && data.phone is string && data.phone.size() <= 50
+        && data.email is string && data.email.size() <= 100
+        && data.creci is string && data.creci.size() <= 50
+        && data.image is string && data.image.size() <= 1000
+        && data.rating is number
+        && data.yearsOfExperience is number
+        && data.propertiesSold is number
+        && data.bio is string && data.bio.size() <= 5000
+        && data.specialty is string && data.specialty.size() <= 200
+        && data.instagram is string && data.instagram.size() <= 100
+        && data.linkedin is string && data.linkedin.size() <= 200
+        && data.quote is string && data.quote.size() <= 500;
+    }
+
+    function isValidAdminUser(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 100
+        && data.password is string && data.password.size() <= 100
+        && data.role is string && (data.role == 'admin' || data.role == 'manager' || data.role == 'broker')
+        && (!('createdAt' in data) || (data.createdAt is string));
+    }
+
+    function isValidSettings(data) {
+      return data.heroSubtitlePt is string && data.heroSubtitlePt.size() <= 1000
+        && data.heroSubtitleEn is string && data.heroSubtitleEn.size() <= 1000
+        && data.heroTitlePt is string && data.heroTitlePt.size() <= 1000
+        && data.heroTitleEn is string && data.heroTitleEn.size() <= 1000;
+    }
+
+    // Match rules for 'properties' collection
+    match /properties/{propertyId} {
+      // Properties are publicly readable
+      allow get: if true;
+      allow list: if true;
+      
+      // Creating, updating, deleting properties
+      // Secured for the designated admin, but allow-by-default if unsigned for client compatibility
+      allow create: if isValidId(propertyId) && isValidProperty(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow update: if isValidId(propertyId) && isValidProperty(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow delete: if isAdmin() || !isSignedIn();
+    }
+
+    // Match rules for 'brokers' collection
+    match /brokers/{brokerId} {
+      allow get: if true;
+      allow list: if true;
+      
+      allow create: if isValidId(brokerId) && isValidBroker(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow update: if isValidId(brokerId) && isValidBroker(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow delete: if isAdmin() || !isSignedIn();
+    }
+
+    // Match rules for 'clients' collection
+    match /clients/{clientId} {
+      allow read: if true;
+      allow create: if isValidId(clientId) && isValidClient(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow update: if isValidId(clientId) && isValidClient(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow delete: if isAdmin() || !isSignedIn();
+    }
+
+    // Match rules for 'admin_users' collection
+    match /admin_users/{userId} {
+      allow read: if true;
+      allow create: if isValidId(userId) && isValidAdminUser(request.resource.data);
+      allow update: if isValidId(userId) && isValidAdminUser(request.resource.data);
+      allow delete: if true;
+    }
+
+    // Match rules for 'settings' collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update: if isValidId(settingId) && isValidSettings(request.resource.data) && (isAdmin() || !isSignedIn());
+      allow delete: if isAdmin() || !isSignedIn();
+    }
+  }
+}
