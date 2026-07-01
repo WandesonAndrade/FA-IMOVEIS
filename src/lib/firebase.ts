@@ -13,24 +13,25 @@ import {
 } from "firebase/firestore";
 import { PROPERTIES, BROKERS, DEFAULT_ABOUT_US } from "../data";
 import { Property, Broker, Client, AdminUser, AboutUsConfig } from "../types";
-import appletConfig from "../../firebase-applet-config.json";
 
-// Web client configuration from the provisioned configuration file.
+// Configuração do cliente web a partir das variáveis de ambiente do Vite (.env)
 const firebaseConfig = {
-  apiKey: appletConfig.apiKey || "",
-  authDomain: appletConfig.authDomain || "",
-  projectId: appletConfig.projectId || "",
-  storageBucket: appletConfig.storageBucket || "",
-  messagingSenderId: appletConfig.messagingSenderId || "",
-  appId: appletConfig.appId || "",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };
 
+// Verifica se as configurações básicas de conexão existem
 const isConfigured = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app;
 let db: any = null;
 let auth: any = null;
 
+// Tipos de operações para o tratamento de erros
 export enum OperationType {
   CREATE = "create",
   UPDATE = "update",
@@ -40,6 +41,7 @@ export enum OperationType {
   WRITE = "write",
 }
 
+// Estrutura de informações de erro do Firestore
 export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
@@ -57,6 +59,7 @@ export interface FirestoreErrorInfo {
   };
 }
 
+// Função centralizada para lidar com erros do Firestore
 export function handleFirestoreError(
   error: unknown,
   operationType: OperationType,
@@ -75,19 +78,29 @@ export function handleFirestoreError(
     operationType,
     path,
   };
-  console.error("Firestore Error: ", JSON.stringify(errInfo));
+  console.error("Erro no Firestore: ", JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 
+// Inicialização do Firebase
 if (isConfigured) {
   try {
+    // Garante que o app não seja inicializado mais de uma vez
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app, appletConfig.firestoreDatabaseId);
+
+    // Captura o ID do banco customizado do .env, se existir
+    const databaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID;
+
+    // Inicializa o Firestore com o banco específico ou o padrão
+    db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
+
     auth = getAuth(app);
-    // Set Firestore log level to silent to prevent connection errors from cluttering the logs in offline sandbox environments
+
+    // Define o nível de log do Firestore como silencioso para evitar
+    // que erros de conexão poluam os logs quando estiver desenvolvendo offline
     setLogLevel("silent");
   } catch (error) {
-    console.error("Erro ao inicializar Firebase:", error);
+    console.error("Erro ao inicializar o Firebase:", error);
   }
 } else {
   console.log(
@@ -95,11 +108,11 @@ if (isConfigured) {
   );
 }
 
-// Validate Connection to Firestore on startup
+// Valida a conexão com o Firestore durante a inicialização do app
 async function testConnection() {
   if (!isConfigured || !db) return;
   try {
-    // Standard connection check with 2-second timeout
+    // Teste padrão de conexão com tempo limite (timeout) de 2 segundos
     const fetchPromise = getDocFromServer(doc(db, "test_connection", "status"));
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("timeout")), 2000),
@@ -108,7 +121,7 @@ async function testConnection() {
     console.log("Conectado com sucesso ao Firestore!");
   } catch (error) {
     console.log(
-      "Firestore connection test finished (operating in offline/cached or fallback mode).",
+      "Teste de conexão com o Firestore finalizado (operando em modo offline/cache ou modo de segurança/fallback).",
     );
   }
 }
@@ -118,7 +131,7 @@ export { db, auth, isConfigured };
 
 /**
  * Função utilitária para buscar todos os imóveis do Firestore.
- * Se o Firebase não estiver configurado ou ocorrer algum erro, retorna as propriedades estáticas como fallback.
+ * Se o Firebase não estiver configurado ou ocorrer algum erro, retorna as propriedades estáticas como fallback (plano B).
  */
 export async function fetchPropertiesFromFirebase(): Promise<Property[]> {
   if (!isConfigured || !db) {
@@ -174,7 +187,7 @@ export async function fetchPropertiesFromFirebase(): Promise<Property[]> {
 }
 
 /**
- * Insere as propriedades iniciais no Firestore para facilitar o setup do cliente.
+ * Insere as propriedades iniciais (do arquivo local) no Firestore para facilitar a configuração do banco.
  */
 export async function seedPropertiesToFirebase(): Promise<boolean> {
   if (!isConfigured || !db) {
@@ -654,8 +667,8 @@ export async function deleteAdminUserFromFirebase(
 }
 
 /**
- * Busca a configuração do "Sobre Nós" do Firestore.
- * Se o Firebase não estiver configurado ou ocorrer algum erro, retorna o DEFAULT_ABOUT_US como fallback.
+ * Busca a configuração da página "Sobre Nós" no Firestore.
+ * Se o Firebase não estiver configurado ou ocorrer algum erro, retorna as configurações padrão (DEFAULT_ABOUT_US) como fallback.
  */
 export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
   if (!isConfigured || !db) {
@@ -717,7 +730,7 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
     return DEFAULT_ABOUT_US;
   } catch (error) {
     console.error(
-      "Erro ao buscar Sobre Nós do Firestore, usando padrão:",
+      "Erro ao buscar configurações do Sobre Nós no Firestore, usando padrão:",
       error,
     );
     return DEFAULT_ABOUT_US;
@@ -725,7 +738,7 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
 }
 
 /**
- * Salva a configuração do "Sobre Nós" no Firestore.
+ * Salva a configuração da página "Sobre Nós" no Firestore.
  */
 export async function saveAboutUsToFirebase(
   config: AboutUsConfig,
