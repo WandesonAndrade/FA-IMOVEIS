@@ -1,19 +1,19 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  doc, 
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
   setDoc,
   deleteDoc,
   getDocFromServer,
   setLogLevel,
-  getDoc
-} from 'firebase/firestore';
-import { PROPERTIES, BROKERS, DEFAULT_ABOUT_US } from '../data';
-import { Property, Broker, Client, AdminUser, AboutUsConfig } from '../types';
-import appletConfig from '../../firebase-applet-config.json';
+  getDoc,
+} from "firebase/firestore";
+import { PROPERTIES, BROKERS, DEFAULT_ABOUT_US } from "../data";
+import { Property, Broker, Client, AdminUser, AboutUsConfig } from "../types";
+import appletConfig from "../../firebase-applet-config.json";
 
 // Web client configuration from the provisioned configuration file.
 const firebaseConfig = {
@@ -22,7 +22,7 @@ const firebaseConfig = {
   projectId: appletConfig.projectId || "",
   storageBucket: appletConfig.storageBucket || "",
   messagingSenderId: appletConfig.messagingSenderId || "",
-  appId: appletConfig.appId || ""
+  appId: appletConfig.appId || "",
 };
 
 const isConfigured = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
@@ -32,12 +32,12 @@ let db: any = null;
 let auth: any = null;
 
 export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
+  CREATE = "create",
+  UPDATE = "update",
+  DELETE = "delete",
+  LIST = "list",
+  GET = "get",
+  WRITE = "write",
 }
 
 export interface FirestoreErrorInfo {
@@ -54,10 +54,14 @@ export interface FirestoreErrorInfo {
       providerId?: string | null;
       email?: string | null;
     }[];
-  }
+  };
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null,
+) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -66,12 +70,12 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       emailVerified: null,
       isAnonymous: null,
       tenantId: null,
-      providerInfo: []
+      providerInfo: [],
     },
     operationType,
-    path
+    path,
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  console.error("Firestore Error: ", JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 
@@ -81,12 +85,14 @@ if (isConfigured) {
     db = getFirestore(app, appletConfig.firestoreDatabaseId);
     auth = getAuth(app);
     // Set Firestore log level to silent to prevent connection errors from cluttering the logs in offline sandbox environments
-    setLogLevel('silent');
+    setLogLevel("silent");
   } catch (error) {
     console.error("Erro ao inicializar Firebase:", error);
   }
 } else {
-  console.log("Firebase não está configurado. O site está usando o modo offline/local com as propriedades do arquivo data.ts.");
+  console.log(
+    "Firebase não está configurado. O site está usando o modo offline/local com as propriedades do arquivo data.ts.",
+  );
 }
 
 // Validate Connection to Firestore on startup
@@ -94,12 +100,16 @@ async function testConnection() {
   if (!isConfigured || !db) return;
   try {
     // Standard connection check with 2-second timeout
-    const fetchPromise = getDocFromServer(doc(db, 'test_connection', 'status'));
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+    const fetchPromise = getDocFromServer(doc(db, "test_connection", "status"));
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), 2000),
+    );
     await Promise.race([fetchPromise, timeoutPromise]);
     console.log("Conectado com sucesso ao Firestore!");
   } catch (error) {
-    console.log("Firestore connection test finished (operating in offline/cached or fallback mode).");
+    console.log(
+      "Firestore connection test finished (operating in offline/cached or fallback mode).",
+    );
   }
 }
 testConnection();
@@ -112,14 +122,18 @@ export { db, auth, isConfigured };
  */
 export async function fetchPropertiesFromFirebase(): Promise<Property[]> {
   if (!isConfigured || !db) {
-    console.log("Retornando propriedades locais (Firebase offline/não configurado)");
+    console.log(
+      "Retornando propriedades locais (Firebase offline/não configurado)",
+    );
     return PROPERTIES;
   }
 
   try {
-    const querySnapshot = await getDocs(collection(db, 'properties'));
+    const querySnapshot = await getDocs(collection(db, "properties"));
     if (querySnapshot.empty) {
-      console.log("Nenhum imóvel encontrado no Firestore. Você pode populá-lo usando a função de semente (seed).");
+      console.log(
+        "Nenhum imóvel encontrado no Firestore. Você pode populá-lo usando a função de semente (seed).",
+      );
       return PROPERTIES;
     }
 
@@ -128,12 +142,12 @@ export async function fetchPropertiesFromFirebase(): Promise<Property[]> {
       const data = docSnap.data();
       fetched.push({
         id: docSnap.id,
-        title: data.title || '',
-        description: data.description || '',
-        fullDescription: data.fullDescription || '',
-        type: data.type || '',
-        location: data.location || '',
-        neighborhood: data.neighborhood || '',
+        title: data.title || "",
+        description: data.description || "",
+        fullDescription: data.fullDescription || "",
+        type: data.type || "",
+        location: data.location || "",
+        neighborhood: data.neighborhood || "",
         price: Number(data.price ?? 0),
         isSobConsulta: !!data.isSobConsulta,
         suites: Number(data.suites ?? 0),
@@ -145,14 +159,16 @@ export async function fetchPropertiesFromFirebase(): Promise<Property[]> {
         images: Array.isArray(data.images) ? data.images : [],
         badge: data.badge || undefined,
         comodidades: Array.isArray(data.comodidades) ? data.comodidades : [],
-        brokerId: data.brokerId || '',
-        closestPlaces: Array.isArray(data.closestPlaces) ? data.closestPlaces : []
+        brokerId: data.brokerId || "",
+        closestPlaces: Array.isArray(data.closestPlaces)
+          ? data.closestPlaces
+          : [],
       });
     });
 
     return fetched;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'properties');
+    handleFirestoreError(error, OperationType.LIST, "properties");
     return PROPERTIES;
   }
 }
@@ -169,7 +185,7 @@ export async function seedPropertiesToFirebase(): Promise<boolean> {
   try {
     for (const prop of PROPERTIES) {
       // Usamos setDoc para manter o mesmo ID definido localmente
-      await setDoc(doc(db, 'properties', prop.id), {
+      await setDoc(doc(db, "properties", prop.id), {
         title: prop.title,
         description: prop.description,
         fullDescription: prop.fullDescription,
@@ -185,16 +201,16 @@ export async function seedPropertiesToFirebase(): Promise<boolean> {
         condominio: prop.condominio || 0,
         iptu: prop.iptu || 0,
         images: prop.images,
-        badge: prop.badge || '',
+        badge: prop.badge || "",
         comodidades: prop.comodidades,
         brokerId: prop.brokerId,
-        closestPlaces: prop.closestPlaces || []
+        closestPlaces: prop.closestPlaces || [],
       });
     }
     console.log("Propriedades semeadas com sucesso no Firestore!");
     return true;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'properties');
+    handleFirestoreError(error, OperationType.WRITE, "properties");
     return false;
   }
 }
@@ -202,12 +218,14 @@ export async function seedPropertiesToFirebase(): Promise<boolean> {
 /**
  * Adiciona ou atualiza um imóvel no Firestore.
  */
-export async function savePropertyToFirebase(property: Property): Promise<Property | null> {
+export async function savePropertyToFirebase(
+  property: Property,
+): Promise<Property | null> {
   if (!isConfigured || !db) {
     console.warn("Firebase não configurado. Retornando imóvel local.");
     return {
       ...property,
-      id: property.id || `prop_${Date.now()}`
+      id: property.id || `prop_${Date.now()}`,
     };
   }
 
@@ -215,12 +233,12 @@ export async function savePropertyToFirebase(property: Property): Promise<Proper
   try {
     const cleanProperty = {
       id: propertyId,
-      title: property.title || '',
-      description: property.description || '',
-      fullDescription: property.fullDescription || '',
-      type: property.type || '',
-      location: property.location || '',
-      neighborhood: property.neighborhood || '',
+      title: property.title || "",
+      description: property.description || "",
+      fullDescription: property.fullDescription || "",
+      type: property.type || "",
+      location: property.location || "",
+      neighborhood: property.neighborhood || "",
       price: Number(property.price ?? 0),
       isSobConsulta: !!property.isSobConsulta,
       suites: Number(property.suites ?? 0),
@@ -230,17 +248,25 @@ export async function savePropertyToFirebase(property: Property): Promise<Proper
       condominio: property.condominio ? Number(property.condominio) : 0,
       iptu: property.iptu ? Number(property.iptu) : 0,
       images: Array.isArray(property.images) ? property.images : [],
-      badge: property.badge || '',
-      comodidades: Array.isArray(property.comodidades) ? property.comodidades : [],
-      brokerId: property.brokerId || 'felipe-alencar',
-      closestPlaces: Array.isArray(property.closestPlaces) ? property.closestPlaces : []
+      badge: property.badge || "",
+      comodidades: Array.isArray(property.comodidades)
+        ? property.comodidades
+        : [],
+      brokerId: property.brokerId || "felipe-alencar",
+      closestPlaces: Array.isArray(property.closestPlaces)
+        ? property.closestPlaces
+        : [],
     };
 
-    await setDoc(doc(db, 'properties', propertyId), cleanProperty);
+    await setDoc(doc(db, "properties", propertyId), cleanProperty);
     console.log("Imóvel salvo com sucesso no Firestore!", cleanProperty);
     return cleanProperty;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `properties/${propertyId}`);
+    handleFirestoreError(
+      error,
+      OperationType.WRITE,
+      `properties/${propertyId}`,
+    );
     return null;
   }
 }
@@ -250,12 +276,14 @@ export async function savePropertyToFirebase(property: Property): Promise<Proper
  */
 export async function deletePropertyFromFirebase(id: string): Promise<boolean> {
   if (!isConfigured || !db) {
-    console.warn("Firebase não configurado. Não é possível deletar remotamente.");
+    console.warn(
+      "Firebase não configurado. Não é possível deletar remotamente.",
+    );
     return true;
   }
 
   try {
-    await deleteDoc(doc(db, 'properties', id));
+    await deleteDoc(doc(db, "properties", id));
     console.log("Imóvel removido com sucesso do Firestore!");
     return true;
   } catch (error) {
@@ -270,14 +298,18 @@ export async function deletePropertyFromFirebase(id: string): Promise<boolean> {
  */
 export async function fetchBrokersFromFirebase(): Promise<Broker[]> {
   if (!isConfigured || !db) {
-    console.log("Retornando corretores locais (Firebase offline/não configurado)");
+    console.log(
+      "Retornando corretores locais (Firebase offline/não configurado)",
+    );
     return BROKERS;
   }
 
   try {
-    const querySnapshot = await getDocs(collection(db, 'brokers'));
+    const querySnapshot = await getDocs(collection(db, "brokers"));
     if (querySnapshot.empty) {
-      console.log("Nenhum corretor encontrado no Firestore. Você pode populá-lo usando a função de semente (seed).");
+      console.log(
+        "Nenhum corretor encontrado no Firestore. Você pode populá-lo usando a função de semente (seed).",
+      );
       return BROKERS;
     }
 
@@ -286,26 +318,26 @@ export async function fetchBrokersFromFirebase(): Promise<Broker[]> {
       const data = docSnap.data();
       fetched.push({
         id: docSnap.id,
-        name: data.name || '',
-        title: data.title || '',
-        phone: data.phone || '',
-        email: data.email || '',
-        creci: data.creci || '',
-        image: data.image || '',
+        name: data.name || "",
+        title: data.title || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        creci: data.creci || "",
+        image: data.image || "",
         rating: Number(data.rating ?? 5.0),
         yearsOfExperience: Number(data.yearsOfExperience ?? 0),
         propertiesSold: Number(data.propertiesSold ?? 0),
-        bio: data.bio || '',
-        specialty: data.specialty || '',
-        instagram: data.instagram || '',
-        linkedin: data.linkedin || '',
-        quote: data.quote || '',
+        bio: data.bio || "",
+        specialty: data.specialty || "",
+        instagram: data.instagram || "",
+        linkedin: data.linkedin || "",
+        quote: data.quote || "",
       });
     });
 
     return fetched;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'brokers');
+    handleFirestoreError(error, OperationType.LIST, "brokers");
     return BROKERS;
   }
 }
@@ -338,12 +370,12 @@ export async function seedBrokersToFirebase(): Promise<boolean> {
         linkedin: broker.linkedin,
         quote: broker.quote,
       };
-      await setDoc(doc(db, 'brokers', broker.id), cleanBroker);
+      await setDoc(doc(db, "brokers", broker.id), cleanBroker);
     }
     console.log("Corretores semeados com sucesso no Firestore!");
     return true;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'brokers');
+    handleFirestoreError(error, OperationType.WRITE, "brokers");
     return false;
   }
 }
@@ -351,12 +383,14 @@ export async function seedBrokersToFirebase(): Promise<boolean> {
 /**
  * Salva ou atualiza um corretor no Firestore.
  */
-export async function saveBrokerToFirebase(broker: Broker): Promise<Broker | null> {
+export async function saveBrokerToFirebase(
+  broker: Broker,
+): Promise<Broker | null> {
   if (!isConfigured || !db) {
     console.warn("Firebase não configurado. Retornando corretor local.");
     return {
       ...broker,
-      id: broker.id || `broker_${Date.now()}`
+      id: broker.id || `broker_${Date.now()}`,
     };
   }
 
@@ -364,23 +398,23 @@ export async function saveBrokerToFirebase(broker: Broker): Promise<Broker | nul
   try {
     const cleanBroker = {
       id: brokerId,
-      name: broker.name || '',
-      title: broker.title || '',
-      phone: broker.phone || '',
-      email: broker.email || '',
-      creci: broker.creci || '',
-      image: broker.image || '',
+      name: broker.name || "",
+      title: broker.title || "",
+      phone: broker.phone || "",
+      email: broker.email || "",
+      creci: broker.creci || "",
+      image: broker.image || "",
       rating: Number(broker.rating ?? 5.0),
       yearsOfExperience: Number(broker.yearsOfExperience ?? 0),
       propertiesSold: Number(broker.propertiesSold ?? 0),
-      bio: broker.bio || '',
-      specialty: broker.specialty || '',
-      instagram: broker.instagram || '',
-      linkedin: broker.linkedin || '',
-      quote: broker.quote || '',
+      bio: broker.bio || "",
+      specialty: broker.specialty || "",
+      instagram: broker.instagram || "",
+      linkedin: broker.linkedin || "",
+      quote: broker.quote || "",
     };
 
-    await setDoc(doc(db, 'brokers', brokerId), cleanBroker);
+    await setDoc(doc(db, "brokers", brokerId), cleanBroker);
     console.log("Corretor salvo com sucesso no Firestore!", cleanBroker);
     return cleanBroker;
   } catch (error) {
@@ -394,12 +428,14 @@ export async function saveBrokerToFirebase(broker: Broker): Promise<Broker | nul
  */
 export async function deleteBrokerToFirebase(id: string): Promise<boolean> {
   if (!isConfigured || !db) {
-    console.warn("Firebase não configurado. Não é possível deletar remotamente.");
+    console.warn(
+      "Firebase não configurado. Não é possível deletar remotamente.",
+    );
     return true;
   }
 
   try {
-    await deleteDoc(doc(db, 'brokers', id));
+    await deleteDoc(doc(db, "brokers", id));
     console.log("Corretor removido com sucesso do Firestore!");
     return true;
   } catch (error) {
@@ -413,50 +449,52 @@ export async function deleteBrokerToFirebase(id: string): Promise<boolean> {
  */
 export async function fetchClientsFromFirebase(): Promise<Client[]> {
   if (!isConfigured || !db) {
-    console.log("Retornando clientes vazios (Firebase offline/não configurado)");
+    console.log(
+      "Retornando clientes vazios (Firebase offline/não configurado)",
+    );
     return [
       {
-        id: 'client-1',
-        name: 'Maria Silva Santos',
-        email: 'maria.silva@gmail.com',
-        phone: '(99) 98822-1144',
-        type: 'owner',
-        createdAt: '2026-06-25T10:00:00Z'
+        id: "client-1",
+        name: "Maria Silva Santos",
+        email: "maria.silva@gmail.com",
+        phone: "(99) 98822-1144",
+        type: "owner",
+        createdAt: "2026-06-25T10:00:00Z",
       },
       {
-        id: 'client-2',
-        name: 'Carlos Alberto Souza',
-        email: 'carlos.alberto@hotmail.com',
-        phone: '(99) 99133-2255',
-        type: 'buyer',
-        buyerStatus: 'interested',
-        createdAt: '2026-06-25T11:00:00Z'
-      }
+        id: "client-2",
+        name: "Carlos Alberto Souza",
+        email: "carlos.alberto@hotmail.com",
+        phone: "(99) 99133-2255",
+        type: "buyer",
+        buyerStatus: "interested",
+        createdAt: "2026-06-25T11:00:00Z",
+      },
     ];
   }
 
   try {
-    const querySnapshot = await getDocs(collection(db, 'clients'));
+    const querySnapshot = await getDocs(collection(db, "clients"));
     const fetched: Client[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       fetched.push({
         id: docSnap.id,
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        type: data.type || 'buyer',
-        propertyId: data.propertyId || '',
-        buyerStatus: data.buyerStatus || '',
-        createdAt: data.createdAt || '',
-        cpf: data.cpf || '',
-        address: data.address || '',
-        spouseName: data.spouseName || ''
+        name: data.name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        type: data.type || "buyer",
+        propertyId: data.propertyId || "",
+        buyerStatus: data.buyerStatus || "",
+        createdAt: data.createdAt || "",
+        cpf: data.cpf || "",
+        address: data.address || "",
+        spouseName: data.spouseName || "",
       });
     });
     return fetched;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'clients');
+    handleFirestoreError(error, OperationType.LIST, "clients");
     return [];
   }
 }
@@ -464,12 +502,14 @@ export async function fetchClientsFromFirebase(): Promise<Client[]> {
 /**
  * Salva ou atualiza um cliente no Firestore.
  */
-export async function saveClientToFirebase(client: Client): Promise<Client | null> {
+export async function saveClientToFirebase(
+  client: Client,
+): Promise<Client | null> {
   if (!isConfigured || !db) {
     console.warn("Firebase não configurado. Salvando cliente localmente.");
     return {
       ...client,
-      id: client.id || `client_${Date.now()}`
+      id: client.id || `client_${Date.now()}`,
     };
   }
 
@@ -477,19 +517,19 @@ export async function saveClientToFirebase(client: Client): Promise<Client | nul
   try {
     const cleanClient = {
       id: clientId,
-      name: client.name || '',
-      email: client.email || '',
-      phone: client.phone || '',
-      type: client.type || 'buyer',
-      propertyId: client.propertyId || '',
-      buyerStatus: client.buyerStatus || '',
+      name: client.name || "",
+      email: client.email || "",
+      phone: client.phone || "",
+      type: client.type || "buyer",
+      propertyId: client.propertyId || "",
+      buyerStatus: client.buyerStatus || "",
       createdAt: client.createdAt || new Date().toISOString(),
-      cpf: client.cpf || '',
-      address: client.address || '',
-      spouseName: client.spouseName || ''
+      cpf: client.cpf || "",
+      address: client.address || "",
+      spouseName: client.spouseName || "",
     };
 
-    await setDoc(doc(db, 'clients', clientId), cleanClient);
+    await setDoc(doc(db, "clients", clientId), cleanClient);
     console.log("Cliente salvo com sucesso no Firestore!", cleanClient);
     return cleanClient as Client;
   } catch (error) {
@@ -503,12 +543,14 @@ export async function saveClientToFirebase(client: Client): Promise<Client | nul
  */
 export async function deleteClientFromFirebase(id: string): Promise<boolean> {
   if (!isConfigured || !db) {
-    console.warn("Firebase não configurado. Não é possível deletar remotamente.");
+    console.warn(
+      "Firebase não configurado. Não é possível deletar remotamente.",
+    );
     return true;
   }
 
   try {
-    await deleteDoc(doc(db, 'clients', id));
+    await deleteDoc(doc(db, "clients", id));
     console.log("Cliente removido com sucesso do Firestore!");
     return true;
   } catch (error) {
@@ -522,27 +564,29 @@ export async function deleteClientFromFirebase(id: string): Promise<boolean> {
  */
 export async function fetchAdminUsersFromFirebase(): Promise<AdminUser[]> {
   if (!isConfigured || !db) {
-    console.log("Retornando usuários administradores vazios (Firebase offline/não configurado)");
+    console.log(
+      "Retornando usuários administradores vazios (Firebase offline/não configurado)",
+    );
     return [];
   }
 
   try {
-    const querySnapshot = await getDocs(collection(db, 'admin_users'));
+    const querySnapshot = await getDocs(collection(db, "admin_users"));
     const fetched: AdminUser[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       fetched.push({
         id: docSnap.id,
-        name: data.name || '',
-        email: data.email || '',
-        password: data.password || '',
-        role: data.role || 'admin',
-        createdAt: data.createdAt || ''
+        name: data.name || "",
+        email: data.email || "",
+        password: data.password || "",
+        role: data.role || "admin",
+        createdAt: data.createdAt || "",
       });
     });
     return fetched;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'admin_users');
+    handleFirestoreError(error, OperationType.LIST, "admin_users");
     return [];
   }
 }
@@ -550,12 +594,16 @@ export async function fetchAdminUsersFromFirebase(): Promise<AdminUser[]> {
 /**
  * Salva ou atualiza um usuário administrador no Firestore.
  */
-export async function saveAdminUserToFirebase(user: AdminUser): Promise<AdminUser | null> {
+export async function saveAdminUserToFirebase(
+  user: AdminUser,
+): Promise<AdminUser | null> {
   if (!isConfigured || !db) {
-    console.warn("Firebase não configurado. Salvando usuário administrador localmente.");
+    console.warn(
+      "Firebase não configurado. Salvando usuário administrador localmente.",
+    );
     return {
       ...user,
-      id: user.id || `user_${Date.now()}`
+      id: user.id || `user_${Date.now()}`,
     };
   }
 
@@ -563,15 +611,18 @@ export async function saveAdminUserToFirebase(user: AdminUser): Promise<AdminUse
   try {
     const cleanUser = {
       id: userId,
-      name: user.name || '',
-      email: user.email || '',
-      password: user.password || '',
-      role: user.role || 'admin',
-      createdAt: user.createdAt || new Date().toISOString()
+      name: user.name || "",
+      email: user.email || "",
+      password: user.password || "",
+      role: user.role || "admin",
+      createdAt: user.createdAt || new Date().toISOString(),
     };
 
-    await setDoc(doc(db, 'admin_users', userId), cleanUser);
-    console.log("Usuário administrador salvo com sucesso no Firestore!", cleanUser);
+    await setDoc(doc(db, "admin_users", userId), cleanUser);
+    console.log(
+      "Usuário administrador salvo com sucesso no Firestore!",
+      cleanUser,
+    );
     return cleanUser as AdminUser;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `admin_users/${userId}`);
@@ -582,14 +633,18 @@ export async function saveAdminUserToFirebase(user: AdminUser): Promise<AdminUse
 /**
  * Remove um usuário administrador do Firestore.
  */
-export async function deleteAdminUserFromFirebase(id: string): Promise<boolean> {
+export async function deleteAdminUserFromFirebase(
+  id: string,
+): Promise<boolean> {
   if (!isConfigured || !db) {
-    console.warn("Firebase não configurado. Não é possível deletar remotamente.");
+    console.warn(
+      "Firebase não configurado. Não é possível deletar remotamente.",
+    );
     return true;
   }
 
   try {
-    await deleteDoc(doc(db, 'admin_users', id));
+    await deleteDoc(doc(db, "admin_users", id));
     console.log("Usuário administrador removido com sucesso do Firestore!");
     return true;
   } catch (error) {
@@ -608,7 +663,7 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
   }
 
   try {
-    const docSnap = await getDoc(doc(db, 'settings', 'about_us'));
+    const docSnap = await getDoc(doc(db, "settings", "about_us"));
     if (docSnap.exists()) {
       const data = docSnap.data();
       return {
@@ -616,27 +671,33 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
         heroSubtitleEn: data.heroSubtitleEn ?? DEFAULT_ABOUT_US.heroSubtitleEn,
         heroTitlePt: data.heroTitlePt ?? DEFAULT_ABOUT_US.heroTitlePt,
         heroTitleEn: data.heroTitleEn ?? DEFAULT_ABOUT_US.heroTitleEn,
-        heroDescriptionPt: data.heroDescriptionPt ?? DEFAULT_ABOUT_US.heroDescriptionPt,
-        heroDescriptionEn: data.heroDescriptionEn ?? DEFAULT_ABOUT_US.heroDescriptionEn,
-        
+        heroDescriptionPt:
+          data.heroDescriptionPt ?? DEFAULT_ABOUT_US.heroDescriptionPt,
+        heroDescriptionEn:
+          data.heroDescriptionEn ?? DEFAULT_ABOUT_US.heroDescriptionEn,
+
         officeImage: data.officeImage ?? DEFAULT_ABOUT_US.officeImage,
-        officeImageBadgePt: data.officeImageBadgePt ?? DEFAULT_ABOUT_US.officeImageBadgePt,
-        officeImageBadgeEn: data.officeImageBadgeEn ?? DEFAULT_ABOUT_US.officeImageBadgeEn,
+        officeImageBadgePt:
+          data.officeImageBadgePt ?? DEFAULT_ABOUT_US.officeImageBadgePt,
+        officeImageBadgeEn:
+          data.officeImageBadgeEn ?? DEFAULT_ABOUT_US.officeImageBadgeEn,
         officeAddress: data.officeAddress ?? DEFAULT_ABOUT_US.officeAddress,
-        
+
         stat1Value: data.stat1Value ?? DEFAULT_ABOUT_US.stat1Value,
         stat1LabelPt: data.stat1LabelPt ?? DEFAULT_ABOUT_US.stat1LabelPt,
         stat1LabelEn: data.stat1LabelEn ?? DEFAULT_ABOUT_US.stat1LabelEn,
         stat2Value: data.stat2Value ?? DEFAULT_ABOUT_US.stat2Value,
         stat2LabelPt: data.stat2LabelPt ?? DEFAULT_ABOUT_US.stat2LabelPt,
         stat2LabelEn: data.stat2LabelEn ?? DEFAULT_ABOUT_US.stat2LabelEn,
-        
+
         contentTitlePt: data.contentTitlePt ?? DEFAULT_ABOUT_US.contentTitlePt,
         contentTitleEn: data.contentTitleEn ?? DEFAULT_ABOUT_US.contentTitleEn,
-        
-        contentParagraphsPt: data.contentParagraphsPt ?? DEFAULT_ABOUT_US.contentParagraphsPt,
-        contentParagraphsEn: data.contentParagraphsEn ?? DEFAULT_ABOUT_US.contentParagraphsEn,
-        
+
+        contentParagraphsPt:
+          data.contentParagraphsPt ?? DEFAULT_ABOUT_US.contentParagraphsPt,
+        contentParagraphsEn:
+          data.contentParagraphsEn ?? DEFAULT_ABOUT_US.contentParagraphsEn,
+
         pillar1TitlePt: data.pillar1TitlePt ?? DEFAULT_ABOUT_US.pillar1TitlePt,
         pillar1TitleEn: data.pillar1TitleEn ?? DEFAULT_ABOUT_US.pillar1TitleEn,
         pillar1DescPt: data.pillar1DescPt ?? DEFAULT_ABOUT_US.pillar1DescPt,
@@ -655,7 +716,10 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
     }
     return DEFAULT_ABOUT_US;
   } catch (error) {
-    console.error("Erro ao buscar Sobre Nós do Firestore, usando padrão:", error);
+    console.error(
+      "Erro ao buscar Sobre Nós do Firestore, usando padrão:",
+      error,
+    );
     return DEFAULT_ABOUT_US;
   }
 }
@@ -663,14 +727,16 @@ export async function fetchAboutUsFromFirebase(): Promise<AboutUsConfig> {
 /**
  * Salva a configuração do "Sobre Nós" no Firestore.
  */
-export async function saveAboutUsToFirebase(config: AboutUsConfig): Promise<boolean> {
+export async function saveAboutUsToFirebase(
+  config: AboutUsConfig,
+): Promise<boolean> {
   if (!isConfigured || !db) {
     console.warn("Firebase não configurado. Salvando localmente.");
     return true;
   }
 
   try {
-    await setDoc(doc(db, 'settings', 'about_us'), { ...config });
+    await setDoc(doc(db, "settings", "about_us"), { ...config });
     console.log("Configuração do Sobre Nós salva com sucesso no Firestore!");
     return true;
   } catch (error) {
@@ -678,4 +744,3 @@ export async function saveAboutUsToFirebase(config: AboutUsConfig): Promise<bool
     return false;
   }
 }
-
