@@ -1038,51 +1038,54 @@ export default function AdminPanel({
       )}
 
       {/* Database connection/warning box */}
-      {isFirebaseConfigured ? (
-        <div className="p-5 bg-green-50 rounded-2xl border border-green-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
-          <div className="space-y-1">
-            <h4 className="text-sm font-bold text-green-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Banco de Dados Firestore Conectado (Firebase Ativo)
-            </h4>
-            <p className="text-xs text-green-700 leading-relaxed max-w-3xl">
-              As informações estão totalmente integradas e sincronizadas em
-              tempo real com o banco de dados Firebase Firestore em produção.
-              Caso queira carregar ou repopular os dados de demonstração no
-              banco, utilize o botão ao lado.
-            </p>
+      {adminUser?.email?.toLowerCase() === "wandesonandrade33@gmail.com" &&
+        (isFirebaseConfigured ? (
+          <div className="p-5 bg-green-50 rounded-2xl border border-green-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-green-800 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Banco de Dados Firestore Conectado (Firebase Ativo)
+              </h4>
+              <p className="text-xs text-green-700 leading-relaxed max-w-3xl">
+                As informações estão totalmente integradas e sincronizadas em
+                tempo real com o banco de dados Firebase Firestore em produção.
+                Caso queira carregar ou repopular os dados de demonstração no
+                banco, utilize o botão ao lado.
+              </p>
+            </div>
+            <button
+              onClick={onSeedFirebase}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
+            >
+              {language === "pt"
+                ? "Importar/Sincronizar Imóveis de Exemplo"
+                : "Import Sample Properties"}
+            </button>
           </div>
-          <button
-            onClick={onSeedFirebase}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
-          >
-            {language === "pt"
-              ? "Importar/Sincronizar Imóveis de Exemplo"
-              : "Import Sample Properties"}
-          </button>
-        </div>
-      ) : (
-        <div className="p-5 bg-yellow-50 rounded-2xl border border-yellow-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
-          <div className="space-y-1">
-            <h4 className="text-sm font-bold text-yellow-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-yellow-500" />
-              Modo de Demonstração (Sem Firebase Ativo)
-            </h4>
-            <p className="text-xs text-yellow-700 leading-relaxed max-w-3xl">
-              Como o Firebase não foi configurado ou ativado via UI, o
-              gerenciamento funcionará em estado temporário na memória do
-              navegador. Para ter persistência definitiva em nuvem, configure as
-              chaves secretas do Firebase no painel do AI Studio.
-            </p>
+        ) : (
+          <div className="p-5 bg-yellow-50 rounded-2xl border border-yellow-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-yellow-800 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                Modo de Demonstração (Sem Firebase Ativo)
+              </h4>
+              <p className="text-xs text-yellow-700 leading-relaxed max-w-3xl">
+                Como o Firebase não foi configurado ou ativado via UI, o
+                gerenciamento funcionará em estado temporário na memória do
+                navegador. Para ter persistência definitiva em nuvem, configure
+                as chaves secretas do Firebase no painel do AI Studio.
+              </p>
+            </div>
+            <button
+              onClick={onSeedFirebase}
+              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
+            >
+              {language === "pt"
+                ? "Semear Dados Iniciais"
+                : "Seed Original Data"}
+            </button>
           </div>
-          <button
-            onClick={onSeedFirebase}
-            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
-          >
-            {language === "pt" ? "Semear Dados Iniciais" : "Seed Original Data"}
-          </button>
-        </div>
-      )}
+        ))}
 
       {/* TABS SELECTOR (ABAS) */}
       {!isEditing && !isEditingBroker && !isEditingClient && !isEditingUser && (
